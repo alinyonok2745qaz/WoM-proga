@@ -1,581 +1,557 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Карточка Студента | Хогвартс WoM</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Marcellus&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        gryffindor: { main: '#740001', accent: '#D3A625', bg: '#2a0001' },
-                        slytherin: { main: '#1A472A', accent: '#AAAAAA', bg: '#092112' },
-                        ravenclaw: { main: '#0E1A40', accent: '#946B2D', bg: '#050a1a' },
-                        hufflepuff: { main: '#ECB939', accent: '#372E29', bg: '#2b2204' },
-                        admin: { main: '#4A154B', accent: '#E01E5A', bg: '#1c051d' },
-                        gold: '#D4AF37'
-                    },
-                    fontFamily: {
-                        cinzel: ['Cinzel', 'serif'],
-                        body: ['Marcellus', 'serif']
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            background-color: #0b0c10;
-            color: #c5c6c7;
-            font-family: 'Marcellus', serif;
-            background-image: radial-gradient(circle at 50% 20%, #1f2833 0%, #0b0c10 80%);
-            min-height: 100vh;
-        }
-        .house-gryffindor { background: linear-gradient(135deg, #740001 0%, #2a0001 100%); border-color: #D3A625; }
-        .house-slytherin { background: linear-gradient(135deg, #1A472A 0%, #092112 100%); border-color: #AAAAAA; }
-        .house-ravenclaw { background: linear-gradient(135deg, #0E1A40 0%, #050a1a 100%); border-color: #946B2D; }
-        .house-hufflepuff { background: linear-gradient(135deg, #705510 0%, #2b2204 100%); border-color: #ECB939; }
-        .house-admin { background: linear-gradient(135deg, #4A154B 0%, #1c051d 100%); border-color: #E01E5A; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WoM — Реестр волшебников</title>
+<script src="https://unpkg.com/@vkontakte/vk-bridge/dist/index.umd.js"></script>
+<style>
+:root {
+  --bg: #090e1e;
+  --panel: #131b32;
+  --gold: #e7bd73;
+  --text: #f5f0e8;
+  --muted: #aeb8d1;
+  --line: #354260;
+  --green: #4caf50;
+  --red: #f44336;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: radial-gradient(ellipse at top, #27325a 0%, transparent 50%), var(--bg);
+  color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
+  min-height: 100vh;
+}
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+header {
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 18px 18px;
+  border-bottom: 1px solid var(--line);
+  background: #0c1225dd;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  backdrop-filter: blur(12px);
+}
+.top {
+  max-width: 950px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo { color: var(--gold); font-size: 26px; letter-spacing: 3px; font-weight: bold; }
+.subtitle { color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+/* Навигация по вкладкам */
+.nav-tabs {
+  display: flex; gap: 8px; max-width: 950px; margin: 15px auto 0; padding: 0 16px; overflow-x: auto;
+}
+.nav-tab {
+  background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+  padding: 8px 16px; border-radius: 10px; font-size: 14px; cursor: pointer; white-space: nowrap;
+}
+.nav-tab.active { background: #554523; color: var(--gold); border-color: var(--gold); }
+
+main { max-width: 950px; margin: auto; padding: 22px 16px 45px; }
+h1 { font-size: 24px; margin: 0 0 8px; }
+.intro { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
+.searchbar { display: flex; gap: 9px; margin-bottom: 14px; }
+input, select, textarea {
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 13px;
+  width: 100%;
+}
+.filters { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 15px; }
+.chip {
+  flex-shrink: 0; border: 1px solid var(--line);
+  background: var(--panel); color: var(--text);
+  padding: 8px 14px; border-radius: 30px; font-size: 13px;
+}
+.chip.active { border-color: var(--gold); background: #554523; }
+
+/* Табло баллов факультетов */
+.houses-score-board {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px;
+}
+.house-score-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px; text-align: center;
+}
+.house-score-card .h-name { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.house-score-card .h-pts { font-size: 16px; font-weight: bold; color: var(--gold); }
+
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+.student {
+  background: linear-gradient(145deg, #1b2542, #11182d);
+  border: 1px solid var(--line);
+  border-radius: 16px; padding: 14px;
+  display: flex; gap: 12px; align-items: center;
+}
+.avatar {
+  width: 65px; height: 65px; border-radius: 50%;
+  display: grid; place-items: center; flex-shrink: 0;
+  background: #2b3150; border: 2px solid var(--gold);
+  font-size: 28px; overflow: hidden;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.info { flex: 1; min-width: 0; }
+.name { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+.meta { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.badge {
+  display: inline-block; border-radius: 20px;
+  padding: 3px 8px; background: #5444a2;
+  font: 11px sans-serif; margin-bottom: 5px;
+}
+.badge.admin { background: #765522; color: #fff0c8; }
+.house { color: var(--gold); }
+.open {
+  border: 1px solid var(--line); background: #222e4d;
+  color: var(--gold); padding: 8px 12px; border-radius: 10px;
+  margin-top: 8px; font-size: 13px; width: 100%; text-align: center; display: block; text-decoration: none;
+}
+.modal {
+  position: fixed; inset: 0; z-index: 5; display: none;
+  align-items: center; justify-content: center;
+  padding: 16px; background: #050817d9;
+}
+.modal.show { display: flex; }
+.dialog {
+  width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+  background: #131b32; border: 1px solid var(--gold);
+  border-radius: 18px; padding: 20px;
+}
+.close-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.close { background: transparent; border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 5px 10px; }
+.pending-item { border: 1px dashed var(--gold); padding: 12px; border-radius: 12px; margin-bottom: 12px; }
+
+/* Стили для кабинетов и калькулятора */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.panel-box {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 15px;
+}
+.cabinets-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+}
+@media(max-width: 650px) { .cards, .cabinets-grid, .houses-score-board { grid-template-columns: 1fr; } }
+</style>
 </head>
-<body class="p-4 sm:p-8 flex flex-col items-center">
+<body>
 
-    <!-- HEADER / LOGO -->
-    <header class="text-center mb-6">
-        <h1 class="font-cinzel text-3xl sm:text-5xl font-bold text-gold tracking-widest uppercase">Хогвартс WoM</h1>
-        <p class="text-sm text-gray-400 mt-1">Школа Чародейства и Волшебства</p>
-    </header>
+<header>
+  <div class="top">
+    <div>
+      <div class="logo">✦ WoM ✦</div>
+      <div class="subtitle">WHERE MAGIC UNITES</div>
+    </div>
+  </div>
+  <!-- Навигация -->
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-target="tab-registry">📜 Реестр</div>
+    <div class="nav-tab" data-target="tab-locations">🏰 Кабинеты</div>
+    <div class="nav-tab" data-target="tab-calculator">⚖ РП-калькулятор</div>
+  </div>
+</header>
 
-    <div class="w-full max-w-4xl space-y-6">
+<main>
+  <!-- ВКЛАДКА 1: РЕЕСТР -->
+  <div id="tab-registry" class="tab-content active">
+    <h1>Карточки волшебников</h1>
+    <p class="intro">Реестр студентов и администрации ролевого проекта WoM.</p>
 
-        <!-- REGISTRATION FORM (if not registered) -->
-        <div id="regSection" class="bg-gray-900/90 border border-gold/40 rounded-2xl p-6 shadow-2xl backdrop-blur">
-            <h2 class="font-cinzel text-2xl text-gold mb-4 text-center">Регистрация в Базе Данных</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs uppercase font-cinzel text-gold mb-1">ФИО Персонажа</label>
-                    <input type="text" id="regFio" placeholder="Гарри Джеймс Поттер" class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-gold outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs uppercase font-cinzel text-gold mb-1">Роль</label>
-                    <select id="regRole" onchange="toggleRoleFields()" class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-gold outline-none">
-                        <option value="student">Студент</option>
-                        <option value="admin">Администрация / Преподаватель</option>
-                    </select>
-                </div>
-                <div id="houseGroup">
-                    <label class="block text-xs uppercase font-cinzel text-gold mb-1">Факультет</label>
-                    <select id="regHouse" class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-gold outline-none">
-                        <option value="Гриффиндор">Гриффиндор</option>
-                        <option value="Слизерин">Слизерин</option>
-                        <option value="Когтевран">Когтевран</option>
-                        <option value="Пуффендуй">Пуффендуй</option>
-                    </select>
-                </div>
-                <div id="courseGroup">
-                    <label class="block text-xs uppercase font-cinzel text-gold mb-1">Курс</label>
-                    <select id="regCourse" class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-gold outline-none">
-                        <option value="1">1 Курс</option>
-                        <option value="2">2 Курс</option>
-                        <option value="3">3 Курс</option>
-                        <option value="4">4 Курс</option>
-                        <option value="5">5 Курс</option>
-                        <option value="6">6 Курс</option>
-                        <option value="7">7 Курс</option>
-                    </select>
-                </div>
-                <div id="jobGroup" class="hidden sm:col-span-2">
-                    <label class="block text-xs uppercase font-cinzel text-gold mb-1">Должность / Преподаваемый предмет</label>
-                    <input type="text" id="regJob" placeholder="Профессор Зельеварения" class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-gold outline-none">
-                </div>
-            </div>
-            <button onclick="saveRegistration()" class="w-full mt-6 py-3 bg-gradient-to-r from-yellow-600 to-gold text-black font-cinzel font-bold rounded-lg hover:brightness-110 transition">Создать Карточку</button>
-        </div>
-
-        <!-- MAIN USER CARD -->
-        <div id="cardSection" class="hidden relative border-2 rounded-2xl p-6 sm:p-8 shadow-2xl transition-all duration-500">
-            <!-- Card Number Badge in Top Corner -->
-            <div class="absolute top-3 right-4 bg-black/60 border border-gold/40 text-gold text-xs px-3 py-1 rounded-full font-cinzel">
-                Карточка <span id="cardNum">№1</span>
-            </div>
-
-            <!-- Profile Info -->
-            <div class="flex flex-col sm:flex-row items-center gap-6">
-                <div class="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-2 border-gold overflow-hidden bg-gray-900 flex items-center justify-center shrink-0 shadow-lg">
-                    <img id="avatarImg" src="https://via.placeholder.com/150?text=Персонаж" class="w-full h-full object-cover">
-                </div>
-                <div class="text-center sm:text-left space-y-2">
-                    <h2 id="cardFio" class="font-cinzel text-2xl sm:text-3xl font-bold text-white">--</h2>
-                    <div class="flex flex-wrap justify-center sm:justify-start gap-2 text-sm">
-                        <span id="cardRoleBadge" class="px-3 py-0.5 rounded-full bg-gold/20 text-gold border border-gold/40 font-cinzel">--</span>
-                        <span id="cardHouseBadge" class="px-3 py-0.5 rounded-full bg-black/40 text-white font-cinzel">--</span>
-                        <span id="cardCourseBadge" class="px-3 py-0.5 rounded-full bg-black/40 text-gray-300">--</span>
-                    </div>
-                    <div class="pt-2 flex items-center justify-center sm:justify-start gap-3" id="pointsBlock">
-                        <div class="bg-black/40 px-4 py-2 rounded-lg border border-gold/30">
-                            <span class="text-xs text-gray-400 block font-cinzel">Личные баллы:</span>
-                            <span id="userPoints" class="text-xl font-bold text-gold">0</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- HOUSE TOTAL POINTS (Starting from 0) -->
-            <div class="mt-6 pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs font-cinzel">
-                <div class="p-2 rounded bg-black/30 border border-red-500/30"><span class="text-red-400 block">Гриффиндор</span><b id="scoreGryffindor">0 б.</b></div>
-                <div class="p-2 rounded bg-black/30 border border-green-500/30"><span class="text-green-400 block">Слизерин</span><b id="scoreSlytherin">0 б.</b></div>
-                <div class="p-2 rounded bg-black/30 border border-blue-500/30"><span class="text-blue-400 block">Когтевран</span><b id="scoreRavenclaw">0 б.</b></div>
-                <div class="p-2 rounded bg-black/30 border border-yellow-500/30"><span class="text-yellow-400 block">Пуффендуй</span><b id="scoreHufflepuff">0 б.</b></div>
-            </div>
-
-            <!-- NAVIGATION BUTTONS -->
-            <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <button onclick="showModal('anketaModal')" class="p-3 bg-black/40 hover:bg-gold/20 border border-gold/30 rounded-xl font-cinzel text-xs sm:text-sm text-gold hover:border-gold transition flex flex-col items-center justify-center gap-1">
-                    <i class="fa-solid fa-scroll text-lg"></i>
-                    <span>Анкета</span>
-                </button>
-                <button onclick="showModal('calcModal')" class="p-3 bg-black/40 hover:bg-gold/20 border border-gold/30 rounded-xl font-cinzel text-xs sm:text-sm text-gold hover:border-gold transition flex flex-col items-center justify-center gap-1">
-                    <i class="fa-solid fa-calculator text-lg"></i>
-                    <span>РП Калькулятор</span>
-                </button>
-                <button onclick="showModal('cabinetsModal')" class="p-3 bg-black/40 hover:bg-gold/20 border border-gold/30 rounded-xl font-cinzel text-xs sm:text-sm text-gold hover:border-gold transition flex flex-col items-center justify-center gap-1">
-                    <i class="fa-solid fa-door-open text-lg"></i>
-                    <span>Кабинеты</span>
-                </button>
-                <button onclick="showModal('locationsModal')" class="p-3 bg-black/40 hover:bg-gold/20 border border-gold/30 rounded-xl font-cinzel text-xs sm:text-sm text-gold hover:border-gold transition flex flex-col items-center justify-center gap-1">
-                    <i class="fa-solid fa-map-location-dot text-lg"></i>
-                    <span>Локации</span>
-                </button>
-            </div>
-
-            <!-- ADMIN PANEL BUTTON -->
-            <div id="adminPanelBtn" class="mt-4 hidden">
-                <button onclick="showModal('adminModal')" class="w-full p-3 bg-red-900/60 border border-red-500 text-red-200 font-cinzel font-bold rounded-xl hover:bg-red-800/80 transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-user-shield"></i> Панель Администратора (Управление баллами, курсами и карточками)
-                </button>
-            </div>
-        </div>
+    <!-- ТАБЛО БАЛЛОВ ФАКУЛЬТЕТОВ (Видно всем) -->
+    <div class="houses-score-board" id="housesScoreBoard">
+      <div class="house-score-card"><div class="h-name">🦁 Гриффиндор</div><div class="h-pts" id="scoreGrif">0</div></div>
+      <div class="house-score-card"><div class="h-name">🦡 Пуффендуй</div><div class="h-pts" id="scorePuff">0</div></div>
+      <div class="house-score-card"><div class="h-name">🦅 Когтевран</div><div class="h-pts" id="scoreRaven">0</div></div>
+      <div class="house-score-card"><div class="h-name">🐍 Слизерин</div><div class="h-pts" id="scoreSlyth">0</div></div>
     </div>
 
-    <!-- MODAL: ANKETA -->
-    <div id="anketaModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-gray-900 border border-gold/50 rounded-2xl max-w-xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeModal('anketaModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-            <h3 class="font-cinzel text-2xl text-gold mb-2">Анкета Персонажа</h3>
-            
-            <div id="deadlineBanner" class="mb-4 p-3 rounded-lg text-xs font-cinzel text-center"></div>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs uppercase font-cinzel text-gold mb-1">Ссылка на фото персонажа</label>
-                    <input type="text" id="anketaPhoto" placeholder="https://..." class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-gold outline-none text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs uppercase font-cinzel text-gold mb-1">Текст анкеты (Биография, характер, внешность)</label>
-                    <textarea id="anketaText" rows="6" placeholder="Опишите историю персонажа..." class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-gold outline-none text-sm"></textarea>
-                </div>
-                <button onclick="saveAnketa()" class="w-full py-2.5 bg-gold text-black font-cinzel font-bold rounded hover:brightness-110">Сохранить Анкету</button>
-            </div>
-        </div>
+    <div class="searchbar">
+      <input id="search" type="search" placeholder="⌕  Поиск по ФИО или № карточки">
     </div>
 
-    <!-- MODAL: RP CALCULATOR -->
-    <div id="calcModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-gray-900 border border-gold/50 rounded-2xl max-w-xl w-full p-6 relative">
-            <button onclick="closeModal('calcModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-            <h3 class="font-cinzel text-2xl text-gold mb-4">Калькулятор РП Постов</h3>
-            <p class="text-xs text-gray-400 mb-3">Вставьте ваш РП пост ниже для автоматического подсчёта ПК-строк (~60-65 символов на строку).</p>
-            <textarea id="rpPostText" oninput="calculateRpLines()" rows="6" placeholder="Вставьте сюда текст поста..." class="w-full p-3 bg-gray-800 border border-gray-700 rounded text-white focus:border-gold outline-none text-sm mb-4"></textarea>
-            <div class="bg-black/50 p-4 rounded-xl border border-gold/30 flex justify-between items-center font-cinzel">
-                <span class="text-gray-300 text-sm">Результат подсчёта:</span>
-                <span class="text-xl font-bold text-gold"><span id="rpLineCount">0</span> ПК-строк</span>
-            </div>
-        </div>
+    <div class="filters" id="houseFilters">
+      <button class="chip active" data-house="">Все</button>
+      <button class="chip" data-house="Гриффиндор">🦁 Гриффиндор</button>
+      <button class="chip" data-house="Пуффендуй">🦡 Пуффендуй</button>
+      <button class="chip" data-house="Когтевран">🦅 Когтевран</button>
+      <button class="chip" data-house="Слизерин">🐍 Слизерин</button>
     </div>
 
-    <!-- MODAL: CABINETS -->
-    <div id="cabinetsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-gray-900 border border-gold/50 rounded-2xl max-w-2xl w-full p-6 relative max-h-[85vh] overflow-y-auto">
-            <button onclick="closeModal('cabinetsModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-            <h3 class="font-cinzel text-2xl text-gold mb-1">Учебные Кабинеты</h3>
-            <p id="cabinetCourseSub" class="text-xs text-gray-400 mb-4">Доступные предметы согласно вашему курсу</p>
-            
-            <div id="cabinetsList" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
-        </div>
+    <div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap">
+      <button class="open" id="addStudent">＋ Новая карточка</button>
+      <button class="open" id="adminButton" style="background:#4a3818;">⚙ Админ-панель</button>
     </div>
 
-    <!-- MODAL: LOCATIONS -->
-    <div id="locationsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-gray-900 border border-gold/50 rounded-2xl max-w-xl w-full p-6 relative max-h-[85vh] overflow-y-auto">
-            <button onclick="closeModal('locationsModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-            <h3 class="font-cinzel text-2xl text-gold mb-4">Локации Хогвартса</h3>
-            <div class="space-y-3">
-                <a href="https://vk.ru/club195728967" target="_blank" class="block p-3 bg-gray-800/80 hover:bg-gold/20 border border-gold/30 rounded-xl text-gold font-cinzel text-sm flex items-center justify-between transition">
-                    <span><i class="fa-solid fa-castle mr-2"></i> Главный Холл и Замок</span>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-                </a>
-                <a href="https://vk.ru/hogsmeade_wom" target="_blank" class="block p-3 bg-gray-800/80 hover:bg-gold/20 border border-gold/30 rounded-xl text-gold font-cinzel text-sm flex items-center justify-between transition">
-                    <span><i class="fa-solid fa-beer-mug-empty mr-2"></i> Хогсмид</span>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-                </a>
-                <a href="https://vk.ru/diagonalley_wom" target="_blank" class="block p-3 bg-gray-800/80 hover:bg-gold/20 border border-gold/30 rounded-xl text-gold font-cinzel text-sm flex items-center justify-between transition">
-                    <span><i class="fa-solid fa-shop mr-2"></i> Косой Переулок</span>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-                </a>
-            </div>
-        </div>
+    <section class="cards" id="cards"></section>
+  </div>
+
+  <!-- ВКЛАДКА 2: КАБИНЕТЫ -->
+  <div id="tab-locations" class="tab-content">
+    <h1>Кабинеты и Предметы</h1>
+    <p class="intro" id="cabinetsSubtitle">Учебные аудитории Хогвартса.</p>
+    <div class="cabinets-grid" id="cabinetsContainer"></div>
+  </div>
+
+  <!-- ВКЛАДКА 3: РП-КАЛЬКУЛЯТОР ПОСТОВ -->
+  <div id="tab-calculator" class="tab-content">
+    <h1>РП-калькулятор постов</h1>
+    <p class="intro">Вставьте текст своего ролевого поста для подсчета символов и точных ПК-строк.</p>
+    <div class="panel-box">
+      <p>Текст вашего РП-поста:</p>
+      <textarea id="rpPostText" rows="6" placeholder="Введите или вставьте текст поста сюда..." style="margin-bottom:14px; width:100%; resize:vertical;"></textarea>
+      
+      <button class="open" id="calcPostBtn" style="border:none; cursor:pointer;">📊 Посчитать символы и ПК-строки</button>
+      
+      <div id="rpCalcResult" style="margin-top:16px; font-size:15px; line-height: 1.6; color:var(--gold);"></div>
+    </div>
+  </div>
+</main>
+
+<!-- МОДАЛЬНОЕ ОКНО СОЗДАНИЯ КАРТОЧКИ -->
+<div class="modal" id="addModal">
+  <div class="dialog">
+    <div class="close-row">
+      <h2>Новая карточка</h2>
+      <button class="close" id="cancelAdd" type="button">✕</button>
+    </div>
+    <form id="studentForm">
+      <p>Роль</p>
+      <select id="newRole">
+        <option value="Студент">Студент</option>
+        <option value="Администратор">Администратор / Преподаватель</option>
+      </select>
+
+      <p>ФИО персонажа</p>
+      <input id="newName" required maxlength="100" placeholder="Иван Иванов">
+
+      <!-- Поля Студента -->
+      <div id="studentFields">
+        <p>Факультет</p>
+        <select id="newHouse">
+          <option value="Гриффиндор">🦁 Гриффиндор</option>
+          <option value="Пуффендуй">🦡 Пуффендуй</option>
+          <option value="Когтевран">🦅 Когтевран</option>
+          <option value="Слизерин">🐍 Слизерин</option>
+        </select>
+        <p>Курс</p>
+        <select id="newCourse">
+          <option value="1">1 курс</option><option value="2">2 курс</option>
+          <option value="3">3 курс</option><option value="4">4 курс</option>
+          <option value="5">5 курс</option><option value="6">6 курс</option>
+          <option value="7">7 курс</option>
+        </select>
+      </div>
+
+      <!-- Поле Администратора -->
+      <div id="adminFields" style="display:none;">
+        <p>Должность / Титул</p>
+        <input id="newPosition" placeholder="Например: Профессор зельеварения">
+      </div>
+
+      <p>Ссылка на фото (необязательно)</p>
+      <input id="newPhoto" type="url" placeholder="https://...">
+
+      <p>Анкета персонажа</p>
+      <textarea id="newQuestionnaire" rows="3" placeholder="Расскажите о себе..."></textarea>
+
+      <button class="open" type="submit" style="margin-top:16px; border:none;">Отправить на проверку</button>
+    </form>
+  </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО АДМИН-ПАНЕЛИ -->
+<div class="modal" id="adminModal">
+  <div class="dialog">
+    <div class="close-row">
+      <h2>⚙ Панель администратора</h2>
+      <button class="close" id="closeAdmin" type="button">✕</button>
     </div>
 
-    <!-- MODAL: ADMIN PANEL -->
-    <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-gray-900 border border-red-500/50 rounded-2xl max-w-xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeModal('adminModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-            <h3 class="font-cinzel text-2xl text-red-400 mb-4">Управление Карточками и Баллами</h3>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs uppercase font-cinzel text-gray-300 mb-1">Поиск по ФИО или Номеру карточки (например №1)</label>
-                    <input type="text" id="adminSearchQuery" placeholder="Введите ФИО или №..." class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-red-400 outline-none text-sm">
-                </div>
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs uppercase font-cinzel text-gray-300 mb-1">Количество баллов</label>
-                        <input type="number" id="adminPointAmount" placeholder="10" class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-red-400 outline-none text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs uppercase font-cinzel text-gray-300 mb-1">Новый курс для студента</label>
-                        <select id="adminNewCourse" class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-red-400 outline-none text-sm">
-                            <option value="1">1 Курс</option>
-                            <option value="2">2 Курс</option>
-                            <option value="3">3 Курс</option>
-                            <option value="4">4 Курс</option>
-                            <option value="5">5 Курс</option>
-                            <option value="6">6 Курс</option>
-                            <option value="7">7 Курс</option>
-                        </select>
-                    </div>
-                </div>
+    <h3>Заявки на модерации</h3>
+    <div id="pendingList"></div>
 
-                <div class="flex gap-2">
-                    <button onclick="adminModifyPoints(true)" class="flex-1 py-2.5 bg-green-700 hover:bg-green-600 text-white font-cinzel font-bold rounded transition text-xs">+ Начислить баллы</button>
-                    <button onclick="adminModifyPoints(false)" class="flex-1 py-2.5 bg-yellow-700 hover:bg-yellow-600 text-white font-cinzel font-bold rounded transition text-xs">- Вычесть баллы</button>
-                </div>
+    <hr style="border-color:var(--line); margin:20px 0;">
 
-                <div>
-                    <button onclick="adminChangeCourse()" class="w-full py-2.5 bg-blue-700 hover:bg-blue-600 text-white font-cinzel font-bold rounded transition text-xs">
-                        <i class="fa-solid fa-graduation-cap mr-1"></i> Изменить курс студента
-                    </button>
-                </div>
+    <h3>Редактирование профиля и баллов</h3>
+    <form id="editProfileForm">
+      <p>Выберите персонажа</p>
+      <select id="adminStudentSelect" required></select>
 
-                <div class="pt-3 border-t border-red-500/30">
-                    <button onclick="adminDeleteCard()" class="w-full py-2.5 bg-red-800 hover:bg-red-700 text-white font-cinzel font-bold rounded transition text-xs flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-trash-can"></i> Удалить карточку по ФИО или Номеру
-                    </button>
-                </div>
-            </div>
-        </div>
+      <p>Изменение баллов (+ / -)</p>
+      <input id="adminPointsChange" type="number" placeholder="Например: 15 или -10">
+
+      <p>Новое ФИО</p>
+      <input id="adminEditName" placeholder="ФИО персонажа">
+
+      <p>Курс / Должность</p>
+      <input id="adminEditMeta" placeholder="Курс или Должность">
+
+      <button class="open" type="submit" style="margin-top:16px; border:none;">Сохранить изменения</button>
+    </form>
+  </div>
+</div>
+
+<script>
+try {
+  vkBridge.send('VKWebAppInit');
+} catch (e) {
+  console.log("VK Bridge Init error");
+}
+
+// Переключение вкладок
+document.querySelectorAll(".nav-tab").forEach(tab => {
+  tab.addEventListener("click", (e) => {
+    document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    e.target.classList.add("active");
+    document.getElementById(e.target.dataset.target).classList.add("active");
+  });
+});
+
+const students = [
+  { number: "001", name: "Алина Воробьёва", role: "Студент", house: "Гриффиндор", course: 1, points: 150, emoji: "🦁", photo: "", status: "active", position: "" },
+  { number: "002", name: "Профессор Снейп", role: "Администратор", house: "", course: 0, points: 500, emoji: "✨", photo: "", status: "active", position: "Декан Слизерина" }
+];
+
+let selectedHouse = "";
+
+document.getElementById("search").addEventListener("input", renderCards);
+
+document.querySelectorAll("#houseFilters .chip").forEach(chip => {
+  chip.addEventListener("click", (e) => {
+    document.querySelectorAll("#houseFilters .chip").forEach(c => c.classList.remove("active"));
+    e.target.classList.add("active");
+    selectedHouse = e.target.dataset.house;
+    renderCards();
+  });
+});
+
+document.getElementById("newRole").addEventListener("change", (e) => {
+  const isAdmin = e.target.value === "Администратор";
+  document.getElementById("studentFields").style.display = isAdmin ? "none" : "block";
+  document.getElementById("adminFields").style.display = isAdmin ? "block" : "none";
+});
+
+// Обновление общего счёта факультетов
+function updateHousesScore() {
+  let scores = { "Гриффиндор": 0, "Пуффендуй": 0, "Когтевран": 0, "Слизерин": 0 };
+  students.forEach(s => {
+    if (s.status === "active" && s.role === "Студент" && scores[s.house] !== undefined) {
+      scores[s.house] += s.points;
+    }
+  });
+  document.getElementById("scoreGrif").innerText = scores["Гриффиндор"];
+  document.getElementById("scorePuff").innerText = scores["Пуффендуй"];
+  document.getElementById("scoreRaven").innerText = scores["Когтевран"];
+  document.getElementById("scoreSlyth").innerText = scores["Слизерин"];
+}
+
+function renderCards() {
+  const query = document.getElementById("search").value.toLowerCase();
+  const container = document.getElementById("cards");
+
+  const filtered = students.filter(s =>
+    s.status === "active" &&
+    (!query || s.name.toLowerCase().includes(query) || s.number.includes(query)) &&
+    (!selectedHouse || s.house === selectedHouse)
+  );
+
+  container.innerHTML = filtered.map(s => `
+    <article class="student">
+      <div class="avatar">${s.photo ? `<img src="${s.photo}">` : (s.emoji || "✨")}</div>
+      <div class="info">
+        <div class="name">${s.name}</div>
+        <div class="badge ${s.role === 'Администратор' ? 'admin' : ''}">${s.role === 'Администратор' ? (s.position || 'Админ') : s.role}</div>
+        <div class="meta">${s.role === 'Студент' ? `<span class="house">${s.emoji} ${s.house}</span> • ${s.course} курс` : ''}</div>
+        <div class="meta">Баллы: <strong>${s.points}</strong></div>
+      </div>
+    </article>
+  `).join("");
+
+  updateHousesScore();
+}
+
+document.getElementById("addStudent").onclick = () => document.getElementById("addModal").classList.add("show");
+document.getElementById("cancelAdd").onclick = () => document.getElementById("addModal").classList.remove("show");
+
+document.getElementById("studentForm").onsubmit = (e) => {
+  e.preventDefault();
+  const role = document.getElementById("newRole").value;
+  const name = document.getElementById("newName").value.trim();
+  const house = role === "Студент" ? document.getElementById("newHouse").value : "";
+  const course = role === "Студент" ? Number(document.getElementById("newCourse").value) : 0;
+  const position = role === "Администратор" ? document.getElementById("newPosition").value.trim() : "";
+  const photo = document.getElementById("newPhoto").value.trim();
+  const questionnaire = document.getElementById("newQuestionnaire").value.trim();
+
+  const emojis = { "Гриффиндор": "🦁", "Пуффендуй": "🦡", "Когтевран": "🦅", "Слизерин": "🐍" };
+
+  students.push({
+    number: String(students.length + 1).padStart(3, "0"),
+    name, role, house, course, position, photo, questionnaire,
+    points: 0,
+    emoji: role === "Студент" ? emojis[house] : "✨",
+    status: "pending"
+  });
+
+  alert("Ваша карточка отправлена на проверку администраторам!");
+  document.getElementById("addModal").classList.remove("show");
+  document.getElementById("studentForm").reset();
+  document.getElementById("studentFields").style.display = "block";
+  document.getElementById("adminFields").style.display = "none";
+};
+
+document.getElementById("adminButton").onclick = () => {
+  renderPending();
+  fillAdminSelect();
+  document.getElementById("adminModal").classList.add("show");
+};
+document.getElementById("closeAdmin").onclick = () => document.getElementById("adminModal").classList.remove("show");
+
+function renderPending() {
+  const pending = students.filter(s => s.status === "pending");
+  const list = document.getElementById("pendingList");
+  if (!pending.length) {
+    list.innerHTML = "<p class='meta'>Заявок на проверку нет.</p>";
+    return;
+  }
+  list.innerHTML = pending.map(s => `
+    <div class="pending-item">
+      <div><strong>${s.name}</strong> (${s.role})</div>
+      <div class="meta">${s.role === 'Студент' ? `${s.house}, ${s.course} курс` : `Должность: ${s.position}`}</div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button type="button" onclick="approveStudent('${s.number}')" style="background:var(--green); color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer;">✅ Одобрить</button>
+        <button type="button" onclick="rejectStudent('${s.number}')" style="background:var(--red); color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer;">❌ Отклонить</button>
+      </div>
     </div>
+  `).join("");
+}
 
-    <!-- SCRIPT LOGIC -->
-    <script>
-        const cabinetsData = [
-            { name: "Полёты на Метле", url: "https://vk.ru/club195728967", minCourse: 1 },
-            { name: "Трансфигурация", url: "https://vk.ru/club198896988", minCourse: 1 },
-            { name: "Зельеварение", url: "https://vk.ru/club198897015", minCourse: 1 },
-            { name: "Заклинания", url: "https://vk.ru/charms_wom", minCourse: 1 },
-            { name: "ЗоТИ", url: "https://vk.ru/club195729144", minCourse: 1 },
-            { name: "История Магии", url: "https://vk.ru/club198894836", minCourse: 1 },
-            { name: "Травология", url: "https://vk.ru/club195729150", minCourse: 1 },
-            { name: "Древние Руны", url: "https://vk.ru/ancientrunes_wom", minCourse: 3 },
-            { name: "УзМС", url: "https://vk.ru/club198896968", minCourse: 3 },
-            { name: "Нумерология", url: "https://vk.ru/club198896932", minCourse: 3 },
-            { name: "Прорицания", url: "https://vk.ru/club198894872", minCourse: 3 }
-        ];
+window.approveStudent = function(num) {
+  const s = students.find(item => item.number === num);
+  if (s) { 
+    s.status = "active"; 
+    renderPending(); 
+    renderCards(); 
+    fillAdminSelect(); 
+  }
+}
 
-        let currentUser = null;
+window.rejectStudent = function(num) {
+  const idx = students.findIndex(item => item.number === num);
+  if (idx !== -1) { 
+    students.splice(idx, 1); 
+    renderPending(); 
+  }
+}
 
-        window.onload = function() {
-            const saved = localStorage.getItem('wom_user_card');
-            if (saved) {
-                currentUser = JSON.parse(saved);
-                renderUserCard();
-            }
-        };
+function fillAdminSelect() {
+  const select = document.getElementById("adminStudentSelect");
+  select.innerHTML = students.filter(s => s.status === "active").map(s =>
+    `<option value="${s.number}">${s.name} (${s.role === 'Студент' ? s.house : s.position})</option>`
+  ).join("");
+}
 
-        function toggleRoleFields() {
-            const role = document.getElementById('regRole').value;
-            if (role === 'admin') {
-                document.getElementById('houseGroup').classList.add('hidden');
-                document.getElementById('courseGroup').classList.add('hidden');
-                document.getElementById('jobGroup').classList.remove('hidden');
-            } else {
-                document.getElementById('houseGroup').classList.remove('hidden');
-                document.getElementById('courseGroup').classList.remove('hidden');
-                document.getElementById('jobGroup').classList.add('hidden');
-            }
-        }
+document.getElementById("editProfileForm").onsubmit = (e) => {
+  e.preventDefault();
+  const num = document.getElementById("adminStudentSelect").value;
+  const s = students.find(item => item.number === num);
+  if (!s) return;
 
-        function saveRegistration() {
-            const fio = document.getElementById('regFio').value.trim();
-            if (!fio) return alert('Введите ФИО!');
+  const ptsChange = Number(document.getElementById("adminPointsChange").value);
+  const newName = document.getElementById("adminEditName").value.trim();
+  const newMeta = document.getElementById("adminEditMeta").value.trim();
 
-            const role = document.getElementById('regRole').value;
-            const house = role === 'student' ? document.getElementById('regHouse').value : '';
-            const course = role === 'student' ? parseInt(document.getElementById('regCourse').value) : 0;
-            const job = role === 'admin' ? document.getElementById('regJob').value.trim() : '';
+  if (ptsChange) s.points += ptsChange;
+  if (newName) s.name = newName;
+  if (newMeta) {
+    if (s.role === "Студент") s.course = Number(newMeta) || s.course;
+    else s.position = newMeta;
+  }
 
-            // Уникальная последовательная нумерация (начиная с №1)
-            let allCards = JSON.parse(localStorage.getItem('wom_all_cards') || '[]');
-            let nextId = 1;
-            if (allCards.length > 0) {
-                let maxNum = 0;
-                allCards.forEach(c => {
-                    let num = parseInt(c.cardNumber.replace('№', '')) || 0;
-                    if (num > maxNum) maxNum = num;
-                });
-                nextId = maxNum + 1;
-            }
-            const cardNum = '№' + nextId;
+  alert("Изменения сохранены!");
+  renderCards();
+  fillAdminSelect();
+  document.getElementById("adminPointsChange").value = "";
+  document.getElementById("adminEditName").value = "";
+  document.getElementById("adminEditMeta").value = "";
+};
 
-            currentUser = {
-                cardNumber: cardNum,
-                fio: fio,
-                role: role,
-                house: house,
-                course: course,
-                job: job,
-                points: 0,
-                regDate: new Date().toISOString(),
-                anketaPhoto: '',
-                anketaText: ''
-            };
+// РЕНДЕР КАБИНЕТОВ В ЗАВИСИМОСТИ ОТ КУРСА
+function renderCabinets(course = 3, isAdmin = true) {
+  const container = document.getElementById("cabinetsContainer");
+  const subtitle = document.getElementById("cabinetsSubtitle");
 
-            allCards.push(currentUser);
-            localStorage.setItem('wom_all_cards', JSON.stringify(allCards));
-            localStorage.setItem('wom_user_card', JSON.stringify(currentUser));
-            renderUserCard();
-        }
+  const baseSubjects = [
+    { name: "🧹 Полёты на Метле", url: "https://vk.ru/club195728967" },
+    { name: "✨ Трансфигурация", url: "https://vk.ru/club198896988" },
+    { name: "🧪 Зельеварение", url: "https://vk.ru/club198897015" },
+    { name: "📜 Заклинания", url: "https://vk.ru/charms_wom" },
+    { name: "🛡 ЗоТИ", url: "https://vk.ru/club195729144" },
+    { name: "⏳ История Магии", url: "https://vk.ru/club198894836" },
+    { name: "🌿 Травология", url: "https://vk.ru/club195729150" }
+  ];
 
-        function renderUserCard() {
-            document.getElementById('regSection').classList.add('hidden');
-            const cardEl = document.getElementById('cardSection');
-            cardEl.classList.remove('hidden');
+  const advancedSubjects = [
+    { name: "🔮 Древние Руны", url: "https://vk.ru/ancientrunes_wom" },
+    { name: "🐉 УзМС", url: "https://vk.ru/club198896968" },
+    { name: "🔢 Нумерология", url: "https://vk.ru/club198896932" },
+    { name: "👁 Прорицания", url: "https://vk.ru/club198894872" }
+  ];
 
-            cardEl.className = 'relative border-2 rounded-2xl p-6 sm:p-8 shadow-2xl transition-all duration-500 ';
-            if (currentUser.role === 'admin') {
-                cardEl.classList.add('house-admin');
-                document.getElementById('pointsBlock').classList.add('hidden');
-            } else {
-                document.getElementById('pointsBlock').classList.remove('hidden');
-                if (currentUser.house === 'Гриффиндор') cardEl.classList.add('house-gryffindor');
-                if (currentUser.house === 'Слизерин') cardEl.classList.add('house-slytherin');
-                if (currentUser.house === 'Когтевран') cardEl.classList.add('house-ravenclaw');
-                if (currentUser.house === 'Пуффендуй') cardEl.classList.add('house-hufflepuff');
-            }
+  let list = [...baseSubjects];
+  if (course >= 3 || isAdmin) {
+    list = [...list, ...advancedSubjects];
+    subtitle.innerText = "Доступные учебные аудитории:";
+  } else {
+    subtitle.innerText = "Вам доступны кабинеты для 1 курса.";
+  }
 
-            document.getElementById('cardNum').textContent = currentUser.cardNumber;
-            document.getElementById('cardFio').textContent = currentUser.fio;
-            document.getElementById('cardRoleBadge').textContent = currentUser.role === 'admin' ? (currentUser.job || 'Администратор') : 'Студент';
-            document.getElementById('cardHouseBadge').textContent = currentUser.role === 'admin' ? 'Преподаватель / Админ' : currentUser.house;
-            document.getElementById('cardCourseBadge').textContent = currentUser.role === 'student' ? `${currentUser.course} Курс` : 'Штаб Школы';
-            document.getElementById('userPoints').textContent = currentUser.points;
+  container.innerHTML = list.map(sub => `
+    <div class="panel-box" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <h3 style="margin-top:0; color:var(--gold);">${sub.name}</h3>
+        <p class="meta">Официальный учебный кабинет ролевого проекта.</p>
+      </div>
+      <a class="open" href="${sub.url}" target="_blank">Перейти в кабинет ↗</a>
+    </div>
+  `).join("");
+}
 
-            if (currentUser.anketaPhoto) {
-                document.getElementById('avatarImg').src = currentUser.anketaPhoto;
-            }
+// РП-калькулятор (точный подсчет ПК-строк по переносам и ширине)
+document.getElementById("calcPostBtn").onclick = () => {
+  const text = document.getElementById("rpPostText").value;
+  const charsNoSpaces = text.replace(/\s+/g, '').length;
+  const charsWithSpaces = text.length;
 
-            if (currentUser.role === 'admin') {
-                document.getElementById('adminPanelBtn').classList.remove('hidden');
-            }
+  // Точный расчет ПК-строк (с учетом жестких переносов Enter и автопереноса длинных строк под стандартный ПК-экран ~75 символов)
+  const paragraphs = text.split(/\r\n|\r|\n/);
+  let pcLinesCount = 0;
+  paragraphs.forEach(p => {
+    if (p.trim() === '') {
+      pcLinesCount += 1; // Пустая строка тоже считается за отступ
+    } else {
+      // Примерно 75 символов на одну стандартную ПК-строку в посте
+      pcLinesCount += Math.max(1, Math.ceil(p.length / 75));
+    }
+  });
 
-            updateAnketaDeadlineBanner();
-            renderCabinetsList();
-        }
+  document.getElementById("rpCalcResult").innerHTML = `
+    📝 Символов (без пробелов): <strong>${charsNoSpaces}</strong><br>
+    📝 Символов (с пробелами): <strong>${charsWithSpaces}</strong><br>
+    💻 Приблизительных ПК-строк: <strong>${pcLinesCount}</strong>
+  `;
+};
 
-        function updateAnketaDeadlineBanner() {
-            const banner = document.getElementById('deadlineBanner');
-            if (currentUser.anketaText && currentUser.anketaText.length > 10) {
-                banner.className = "mb-4 p-3 rounded-lg text-xs font-cinzel text-center bg-green-900/60 text-green-200 border border-green-500/40";
-                banner.textContent = "✓ Анкета персонажа заполнена и принята";
-                return;
-            }
-
-            const regDate = new Date(currentUser.regDate);
-            const now = new Date();
-            const diffDays = Math.floor((now - regDate) / (1000 * 60 * 60 * 24));
-            const daysLeft = 30 - diffDays;
-
-            if (daysLeft <= 0) {
-                banner.className = "mb-4 p-3 rounded-lg text-xs font-cinzel text-center bg-red-950 text-red-200 border border-red-500/50";
-                banner.textContent = "⚠️ СРОК ИСТЕК! Прошло более 30 дней с момента создания карточки. Пожалуйста, сдайте анкету!";
-            } else if (daysLeft <= 1) {
-                banner.className = "mb-4 p-3 rounded-lg text-xs font-cinzel text-center bg-red-900/80 text-red-100 border border-red-500/50 animate-pulse";
-                banner.textContent = `🚨 НАПОМИНАНИЕ: Остался всего 1 день до сдачи анкеты!`;
-            } else if (daysLeft <= 3) {
-                banner.className = "mb-4 p-3 rounded-lg text-xs font-cinzel text-center bg-orange-900/80 text-orange-100 border border-orange-500/50";
-                banner.textContent = `⚠️ Осталось ${daysLeft} дня(ей) до окончания дедлайна сдачи анкеты!`;
-            } else if (daysLeft <= 7) {
-                banner.className = "mb-4 p-3 rounded-lg text-xs font-cinzel text-center bg-yellow-900/60 text-yellow-100 border border-yellow-500/50";
-                banner.textContent = `🔔 Напоминание: До сдачи анкеты осталось ${daysLeft} дней.`;
-            } else {
-                banner.className = "mb-4 p-3 rounded-lg text-xs font-cinzel text-center bg-gray-800 text-gray-300 border border-gray-700";
-                banner.textContent = `У вас есть 30 дней на заполнение анкеты (Осталось ${daysLeft} дн.)`;
-            }
-        }
-
-        function renderCabinetsList() {
-            const listEl = document.getElementById('cabinetsList');
-            listEl.innerHTML = '';
-
-            const userCourse = currentUser.role === 'admin' ? 7 : (currentUser.course || 1);
-            document.getElementById('cabinetCourseSub').textContent = currentUser.role === 'admin' ? 'Доступ ко всем кабинетам (Администратор)' : `Доступные кабинеты для ${userCourse} курса`;
-
-            cabinetsData.forEach(cab => {
-                if (userCourse >= cab.minCourse) {
-                    const a = document.createElement('a');
-                    a.href = cab.url;
-                    a.target = '_blank';
-                    a.className = "p-3 bg-gray-800/80 hover:bg-gold/20 border border-gold/30 rounded-xl text-gold font-cinzel text-sm flex items-center justify-between transition";
-                    a.innerHTML = `<span><i class="fa-solid fa-book-bookmark mr-2"></i> ${cab.name}</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>`;
-                    listEl.appendChild(a);
-                }
-            });
-        }
-
-        function saveAnketa() {
-            currentUser.anketaPhoto = document.getElementById('anketaPhoto').value.trim();
-            currentUser.anketaText = document.getElementById('anketaText').value.trim();
-            
-            let allCards = JSON.parse(localStorage.getItem('wom_all_cards') || '[]');
-            allCards = allCards.map(c => c.cardNumber === currentUser.cardNumber ? currentUser : c);
-            localStorage.setItem('wom_all_cards', JSON.stringify(allCards));
-
-            localStorage.setItem('wom_user_card', JSON.stringify(currentUser));
-            renderUserCard();
-            closeModal('anketaModal');
-        }
-
-        function calculateRpLines() {
-            const text = document.getElementById('rpPostText').value;
-            const lines = text.length > 0 ? Math.ceil(text.length / 62) : 0;
-            document.getElementById('rpLineCount').textContent = lines;
-        }
-
-        function findTargetCard(query) {
-            let allCards = JSON.parse(localStorage.getItem('wom_all_cards') || '[]');
-            let target = allCards.find(c => c.cardNumber.toLowerCase() === query || c.fio.toLowerCase().includes(query));
-            if (!target && currentUser && (currentUser.cardNumber.toLowerCase() === query || currentUser.fio.toLowerCase().includes(query))) {
-                target = currentUser;
-            }
-            return { target, allCards };
-        }
-
-        function adminModifyPoints(isAdd) {
-            const query = document.getElementById('adminSearchQuery').value.trim().toLowerCase();
-            const amount = parseInt(document.getElementById('adminPointAmount').value) || 0;
-
-            if (!query) return alert('Введите ФИО или номер карточки для поиска!');
-
-            let { target, allCards } = findTargetCard(query);
-
-            if (!target) {
-                return alert('Карточка с таким ФИО или номером не найдена!');
-            }
-
-            if (target.role === 'admin') {
-                return alert('Ошибка: у администраторов не может быть баллов!');
-            }
-
-            if (isAdd) target.points += amount;
-            else target.points = Math.max(0, target.points - amount);
-
-            allCards = allCards.map(c => c.cardNumber === target.cardNumber ? target : c);
-            localStorage.setItem('wom_all_cards', JSON.stringify(allCards));
-
-            if (currentUser && currentUser.cardNumber === target.cardNumber) {
-                currentUser = target;
-                localStorage.setItem('wom_user_card', JSON.stringify(currentUser));
-                renderUserCard();
-            }
-
-            closeModal('adminModal');
-            alert(`Баллы карточки ${target.cardNumber} (${target.fio}) успешно обновлены!`);
-        }
-
-        function adminChangeCourse() {
-            const query = document.getElementById('adminSearchQuery').value.trim().toLowerCase();
-            const newCourse = parseInt(document.getElementById('adminNewCourse').value);
-
-            if (!query) return alert('Введите ФИО или номер карточки для поиска!');
-
-            let { target, allCards } = findTargetCard(query);
-
-            if (!target) {
-                return alert('Карточка с таким ФИО или номером не найдена!');
-            }
-
-            if (target.role === 'admin') {
-                return alert('Ошибка: у администраторов нет учебного курса!');
-            }
-
-            target.course = newCourse;
-
-            allCards = allCards.map(c => c.cardNumber === target.cardNumber ? target : c);
-            localStorage.setItem('wom_all_cards', JSON.stringify(allCards));
-
-            if (currentUser && currentUser.cardNumber === target.cardNumber) {
-                currentUser = target;
-                localStorage.setItem('wom_user_card', JSON.stringify(currentUser));
-                renderUserCard();
-            }
-
-            closeModal('adminModal');
-            alert(`Курс для ${target.cardNumber} (${target.fio}) успешно изменен на ${newCourse}-й!`);
-        }
-
-        function adminDeleteCard() {
-            const query = document.getElementById('adminSearchQuery').value.trim().toLowerCase();
-            if (!query) return alert('Введите ФИО или номер карточки для удаления!');
-
-            let allCards = JSON.parse(localStorage.getItem('wom_all_cards') || '[]');
-            let index = allCards.findIndex(c => c.cardNumber.toLowerCase() === query || c.fio.toLowerCase().includes(query));
-
-            if (index === -1 && currentUser && (currentUser.cardNumber.toLowerCase() === query || currentUser.fio.toLowerCase().includes(query))) {
-                localStorage.removeItem('wom_user_card');
-                localStorage.setItem('wom_all_cards', JSON.stringify(allCards.filter(c => c.cardNumber !== currentUser.cardNumber)));
-                alert('Карточка была удалена. Страница будет перезагружена.');
-                location.reload();
-                return;
-            }
-
-            if (index === -1) {
-                return alert('Карточка с таким ФИО или номером не найдена для удаления.');
-            }
-
-            let deletedCard = allCards[index];
-            if (confirm(`Вы уверены, что хотите удалить карточку ${deletedCard.cardNumber} (${deletedCard.fio})?`)) {
-                allCards.splice(index, 1);
-                localStorage.setItem('wom_all_cards', JSON.stringify(allCards));
-
-                if (currentUser && currentUser.cardNumber === deletedCard.cardNumber) {
-                    localStorage.removeItem('wom_user_card');
-                    alert('Карточка была удалена. Страница будет перезагружена.');
-                    location.reload();
-                } else {
-                    closeModal('adminModal');
-                    alert(`Карточка ${deletedCard.cardNumber} (${deletedCard.fio}) успешно удалена!`);
-                }
-            }
-        }
-
-        function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-    </script>
+renderCards();
+renderCabinets(3, true);
+</script>
 </body>
 </html>
